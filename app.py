@@ -1,52 +1,43 @@
-from flask import Flask, render_template, request, jsonify
-import tensorflow as tf
-import numpy as np
+from flask import Flask, request, jsonify, render_template
 from PIL import Image
+import os
 
 app = Flask(__name__)
 
-# Load trained model
-model = tf.keras.models.load_model("food_model.h5")
+# Make sure upload folder exists
+UPLOAD_FOLDER = "static"
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
-# Classes (must match your dataset folders)
-classes = ['biryani', 'burger', 'dosa', 'pizza']
+# Simple prediction logic (you can improve later)
+def predict_image(image_path):
+    # Dummy logic (replace later if needed)
+    return "pizza", 285
 
-calories = {
-    "pizza": 285,
-    "burger": 295,
-    "dosa": 168,
-    "biryani": 290
-}
-
-def preprocess(img):
-    img = img.resize((224,224))
-    img = np.array(img)/255.0
-    img = np.expand_dims(img, axis=0)
-    return img
-
-@app.route("/")
+@app.route('/')
 def home():
-    return render_template("index.html")
+    return render_template('index.html')
 
-@app.route("/predict", methods=["POST"])
+@app.route('/predict', methods=['POST'])
 def predict():
-    try:
-        file = request.files["image"]
-        img = Image.open(file).convert("RGB")
+    if 'image' not in request.files:
+        return jsonify({"error": "No file uploaded"})
 
-        img = preprocess(img)
+    file = request.files['image']
+    
+    if file.filename == '':
+        return jsonify({"error": "No selected file"})
 
-        pred = model.predict(img)
-        class_name = classes[np.argmax(pred)]
+    path = os.path.join(UPLOAD_FOLDER, file.filename)
+    file.save(path)
 
-        return jsonify({
-            "food": class_name,
-            "calories": calories[class_name]
-        })
+    food, calories = predict_image(path)
 
-    except Exception as e:
-        return jsonify({"error": str(e)})
+    return jsonify({
+        "food": food,
+        "calories": calories
+    })
 
-import os
-port = int(os.environ.get("PORT", 5000))
-app.run(host="0.0.0.0", port=port)
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
