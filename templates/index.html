@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Calorie Detector</title>
+
+<!-- Modern Font -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Outfit',sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#0f0f1a;
+    color:white;
+}
+
+/* Container */
+.container{
+    width:400px;
+    padding:30px;
+    border-radius:20px;
+    background:#151528;
+    box-shadow: 0 0 40px rgba(0,0,0,0.6);
+    text-align:center;
+}
+
+/* Title */
+.title{
+    font-size:34px;
+    font-weight:700;
+    background: linear-gradient(90deg, #00f5ff, #ff00ff);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    margin-bottom:5px;
+}
+
+.subtitle{
+    font-size:13px;
+    color:#aaa;
+    margin-bottom:25px;
+}
+
+/* Upload Box */
+.upload-box{
+    border:2px dashed #2a2a40;
+    padding:20px;
+    border-radius:15px;
+    margin-bottom:20px;
+    transition:0.3s;
+}
+
+.upload-box:hover{
+    border-color:#00f5ff;
+    box-shadow:0 0 10px #00f5ff;
+}
+
+input{
+    color:#ccc;
+}
+
+/* Button */
+button{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    background: linear-gradient(90deg, #ff00ff, #00f5ff);
+    color:white;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    box-shadow: 0 0 20px #ff00ff;
+    transform:scale(1.03);
+}
+
+/* Image */
+img{
+    width:100%;
+    margin-top:20px;
+    border-radius:15px;
+}
+
+/* Result Card */
+.result-card{
+    margin-top:20px;
+    padding:20px;
+    border-radius:15px;
+    background:#1c1c33;
+    border:1px solid #2a2a40;
+}
+
+/* Labels */
+.label{
+    font-size:12px;
+    color:#888;
+    letter-spacing:1px;
+    text-transform:uppercase;
+}
+
+.value{
+    font-size:22px;
+    font-weight:700;
+    margin-bottom:15px;
+}
+
+/* Neon Highlight */
+.cal{
+    color:#00f5ff;
+    text-shadow:0 0 10px #00f5ff;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="title">🍔 Calorie Detector</div>
+    <div class="subtitle">Smart AI food recognition</div>
+
+    <div class="upload-box">
+        <input type="file" id="imageInput" onchange="preview()">
+    </div>
+
+    <button onclick="upload()">Predict</button>
+
+    <img id="previewImg">
+
+    <div id="result"></div>
+
+</div>
+
+<script>
+
+function preview(){
+    let file = document.getElementById("imageInput").files[0];
+
+    if(file){
+        let reader = new FileReader();
+        reader.onload = function(e){
+            document.getElementById("previewImg").src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+function upload(){
+
+    let file = document.getElementById("imageInput").files[0];
+
+    if(!file){
+        alert("Select image first!");
+        return;
+    }
+
+    let formData = new FormData();
+    formData.append("image", file);
+
+    fetch("/predict", {
+        method:"POST",
+        body:formData
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        document.getElementById("result").innerHTML =
+        `<div class="result-card">
+
+            <div class="label">Food Name</div>
+            <div class="value">🍽 ${data.food}</div>
+
+            <div class="label">Calories</div>
+            <div class="value cal">🔥 ${data.calories} kcal</div>
+
+        </div>`;
+    })
+    .catch(err => {
+        console.log(err);
+        alert("Prediction failed!");
+    });
+}
+
+</script>
+
+</body>
+</html>
